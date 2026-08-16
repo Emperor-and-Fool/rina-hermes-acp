@@ -115,6 +115,21 @@ export function createAddMessage(deps) {
             content.className = 'content';
             content.textContent = text;
             div.appendChild(content);
+            // Render staged/pasted images inline in the sent user bubble.
+            const images = options && options.images;
+            if (role === 'user' && Array.isArray(images) && images.length > 0) {
+                const gallery = document.createElement('div');
+                gallery.className = 'message-image-gallery';
+                for (const img of images) {
+                    if (!img || !img.data) continue;
+                    const el = document.createElement('img');
+                    el.className = 'message-image';
+                    el.src = 'data:' + (img.mimeType || 'image/png') + ';base64,' + img.data;
+                    el.alt = 'pasted image';
+                    gallery.appendChild(el);
+                }
+                if (gallery.childNodes.length > 0) div.appendChild(gallery);
+            }
             group._rawText = text;
             if (role === 'user') {
                 deps.processFileRefs(content);

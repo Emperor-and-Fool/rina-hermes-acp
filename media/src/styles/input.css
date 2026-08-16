@@ -1066,3 +1066,41 @@ mark.search-mark-active {
     flex-shrink: 0;
 }
 
+
+/* Image-paste preview bar (staged images pending send). */
+.image-paste-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 8px 4px;
+}
+.image-paste-thumb {
+    position: relative;
+    display: inline-flex;
+}
+.image-paste-thumb img {
+    max-height: 56px;
+    max-width: 96px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    display: block;
+}
+.image-paste-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    line-height: 1;
+    font-size: 12px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--vscode-input-background, #3c3c3c);
+    color: var(--fg);
+    cursor: pointer;
+}
+.image-paste-remove:hover {
+    background: var(--error, #c33);
+    color: #fff;
+}

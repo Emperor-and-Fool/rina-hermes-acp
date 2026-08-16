@@ -7,7 +7,8 @@ import {
     methods
 } from '@agentclientprotocol/sdk';
 import type {
-    ClientConnection
+    ClientConnection,
+    ContentBlock
 } from '@agentclientprotocol/sdk';
 import { PROTOCOL_VERSION } from '@agentclientprotocol/sdk';
 import {
@@ -424,7 +425,7 @@ export class AcpClient {
         }
     }
 
-    async sendMessage(text: string): Promise<void> {
+    async sendMessage(text: string | ContentBlock | ContentBlock[]): Promise<void> {
         if (this._status !== 'ready') {
             this._onMessage('assistant', 'Please wait for connection...');
             return;

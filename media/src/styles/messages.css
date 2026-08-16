@@ -834,3 +834,19 @@
     line-height: 1.8;
 }
 
+
+/* Inline images in user messages (rendered from pasted images at send time). */
+.message-image-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.message-image {
+    max-width: 100%;
+    max-height: 320px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: block;
+    cursor: zoom-in;
+}

@@ -951,12 +951,106 @@
     };
   }
 
+  // media/src/input/image-paste.js
+  var PREVIEW_BAR_ID = "imagePasteBar";
+  var pending = [];
+  function ensurePreviewBar() {
+    if (!inputCompositeEl) return null;
+    let bar = document.getElementById(PREVIEW_BAR_ID);
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = PREVIEW_BAR_ID;
+      bar.className = "image-paste-bar";
+      inputCompositeEl.insertBefore(bar, inputCompositeEl.firstChild);
+    }
+    return bar;
+  }
+  function renderPreviews() {
+    const bar = ensurePreviewBar();
+    if (!bar) return;
+    bar.innerHTML = "";
+    if (pending.length === 0) {
+      bar.hidden = true;
+      return;
+    }
+    bar.hidden = false;
+    pending.forEach((img, i) => {
+      const wrap = document.createElement("div");
+      wrap.className = "image-paste-thumb";
+      const el = document.createElement("img");
+      el.src = "data:" + img.mimeType + ";base64," + img.data;
+      el.alt = "pasted image " + (i + 1);
+      const kb = Math.round(img.data.length * 0.75 / 1024);
+      el.title = img.mimeType + " \u2014 " + kb + " KB";
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "image-paste-remove";
+      remove.setAttribute("aria-label", "Remove image");
+      remove.textContent = "\xD7";
+      remove.addEventListener("click", () => {
+        pending.splice(i, 1);
+        renderPreviews();
+      });
+      wrap.appendChild(el);
+      wrap.appendChild(remove);
+      bar.appendChild(wrap);
+    });
+  }
+  async function stageImageFile(file) {
+    const buf = await file.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    const CHUNK = 32768;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    pending.push({
+      mimeType: file.type || "image/png",
+      data: btoa(bin)
+    });
+    renderPreviews();
+  }
+  function bindImagePaste() {
+    if (!inputEl) return;
+    inputEl.addEventListener("paste", async (e) => {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      const files = [];
+      for (const item of items) {
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const f = item.getAsFile();
+          if (f) files.push(f);
+        }
+      }
+      if (files.length === 0) return;
+      e.preventDefault();
+      for (const f of files) {
+        try {
+          await stageImageFile(f);
+        } catch (err) {
+          console.error("[image-paste] failed to stage image", err);
+        }
+      }
+    });
+  }
+  function getPendingImages() {
+    return pending.slice();
+  }
+  function hasPendingImages() {
+    return pending.length > 0;
+  }
+  function clearPendingImages() {
+    pending.length = 0;
+    renderPreviews();
+  }
+
   // media/src/input/send.js
   function createSend(deps) {
     function executeSendMessage(text, attachOverride) {
       deps.hideFilePicker();
       resetAutoScrollFollow();
-      deps.addMessage("user", text);
+      const images = getPendingImages();
+      deps.addMessage("user", text, images.length ? { images } : void 0);
       inputEl.value = "";
       deps.syncInputHeightFromContent();
       deps.updateQuickActionBtns();
@@ -967,12 +1061,15 @@
       vscode.postMessage({
         type: "sendMessage",
         text,
-        contextAttach: payload
+        contextAttach: payload,
+        images: images.length ? images : void 0
       });
+      clearPendingImages();
     }
     function sendMessage() {
       const text = inputEl.value.trim();
-      if (!text || !deps.getCanSend()) return;
+      const hasImages = hasPendingImages();
+      if (!text && !hasImages || !deps.getCanSend()) return;
       if (deps.hasUnconfirmedCustomMemorySelection()) {
         deps.openContextAttachSendModal(text);
         return;
@@ -980,6 +1077,7 @@
       executeSendMessage(text);
     }
     function bindSendEvents() {
+      bindImagePaste();
       inputEl.addEventListener("keydown", function(e) {
         if (e.key === "Escape" && deps.getMultiSelectMode()) {
           e.preventDefault();
@@ -2155,6 +2253,20 @@
         content.className = "content";
         content.textContent = text;
         div.appendChild(content);
+        const images = options && options.images;
+        if (role === "user" && Array.isArray(images) && images.length > 0) {
+          const gallery = document.createElement("div");
+          gallery.className = "message-image-gallery";
+          for (const img of images) {
+            if (!img || !img.data) continue;
+            const el = document.createElement("img");
+            el.className = "message-image";
+            el.src = "data:" + (img.mimeType || "image/png") + ";base64," + img.data;
+            el.alt = "pasted image";
+            gallery.appendChild(el);
+          }
+          if (gallery.childNodes.length > 0) div.appendChild(gallery);
+        }
         group._rawText = text;
         if (role === "user") {
           deps.processFileRefs(content);

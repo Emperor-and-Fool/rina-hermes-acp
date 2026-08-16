@@ -13,6 +13,17 @@
     --assistant-bg: color-mix(in srgb, var(--primary) 14%, var(--text-block));
     --assistant-border: color-mix(in srgb, var(--primary) 40%, var(--border));
 }
+/* Light-theme readability: sideBar-foreground is too dim on light themes,
+   and the 14%-primary blend collapses onto the editor background. Rebind
+   these variables under the VS Code light-theme body classes so contrast
+   stays legible without affecting dark themes. */
+body.vscode-light,
+body.vscode-high-contrast-light {
+    --fg: var(--vscode-editor-foreground, #1e1e1e);
+    --dim: var(--vscode-descriptionForeground, #555);
+    --assistant-bg: color-mix(in srgb, var(--primary) 8%, var(--vscode-editor-background, #ffffff));
+    --assistant-border: color-mix(in srgb, var(--primary) 55%, var(--border));
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
     font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, sans-serif);

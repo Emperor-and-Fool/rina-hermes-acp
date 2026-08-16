@@ -13,6 +13,17 @@
     --assistant-bg: color-mix(in srgb, var(--primary) 14%, var(--text-block));
     --assistant-border: color-mix(in srgb, var(--primary) 40%, var(--border));
 }
+/* Light-theme readability: sideBar-foreground is too dim on light themes,
+   and the 14%-primary blend collapses onto the editor background. Rebind
+   these variables under the VS Code light-theme body classes so contrast
+   stays legible without affecting dark themes. */
+body.vscode-light,
+body.vscode-high-contrast-light {
+    --fg: var(--vscode-editor-foreground, #1e1e1e);
+    --dim: var(--vscode-descriptionForeground, #555);
+    --assistant-bg: color-mix(in srgb, var(--primary) 8%, var(--vscode-editor-background, #ffffff));
+    --assistant-border: color-mix(in srgb, var(--primary) 55%, var(--border));
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
     font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, sans-serif);
@@ -1731,6 +1742,22 @@ body {
 }
 
 
+/* Inline images in user messages (rendered from pasted images at send time). */
+.message-image-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.message-image {
+    max-width: 100%;
+    max-height: 320px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: block;
+    cursor: zoom-in;
+}
+
 /* Input area */
 #input-area {
     --input-max-height: 120px;
@@ -2799,6 +2826,44 @@ mark.search-mark-active {
     flex-shrink: 0;
 }
 
+
+/* Image-paste preview bar (staged images pending send). */
+.image-paste-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 8px 4px;
+}
+.image-paste-thumb {
+    position: relative;
+    display: inline-flex;
+}
+.image-paste-thumb img {
+    max-height: 56px;
+    max-width: 96px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    display: block;
+}
+.image-paste-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    line-height: 1;
+    font-size: 12px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--vscode-input-background, #3c3c3c);
+    color: var(--fg);
+    cursor: pointer;
+}
+.image-paste-remove:hover {
+    background: var(--error, #c33);
+    color: #fff;
+}
 
 /* Modals — responsive shell */
 .modal-overlay {

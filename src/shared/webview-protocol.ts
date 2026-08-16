@@ -15,11 +15,19 @@ export type DetectProgressPayload = {
     reportStatus?: string;
 };
 
+/** A single image staged for send, base64-encoded (no `data:` prefix). */
+export type PendingImage = {
+    mimeType: string;
+    data: string;
+};
+
 /** Payload for {@link WebviewToExtensionMessage} `sendMessage`. */
 export type SendMessagePayload = {
     type: 'sendMessage';
     text: string;
     contextAttach?: ContextAttachOption;
+    /** Images pasted into the input, forwarded as ACP `image` content blocks. */
+    images?: PendingImage[];
 };
 
 /** Messages posted from the webview to the extension host. */

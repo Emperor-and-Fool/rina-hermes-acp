@@ -7,13 +7,20 @@ import {
     inputCompositeShellEl,
 } from '../core/dom-refs.js';
 import { resetAutoScrollFollow } from '../messages/scroll.js';
+import {
+    bindImagePaste,
+    getPendingImages,
+    hasPendingImages,
+    clearPendingImages,
+} from './image-paste.js';
 
 /** @param {Record<string, Function>} deps */
 export function createSend(deps) {
     function executeSendMessage(text, attachOverride) {
         deps.hideFilePicker();
         resetAutoScrollFollow();
-        deps.addMessage('user', text);
+        const images = getPendingImages();
+        deps.addMessage('user', text, images.length ? { images } : undefined);
         inputEl.value = '';
         deps.syncInputHeightFromContent();
         deps.updateQuickActionBtns();
@@ -28,12 +35,16 @@ export function createSend(deps) {
             type: 'sendMessage',
             text: text,
             contextAttach: payload,
+            images: images.length ? images : undefined,
         });
+        clearPendingImages();
     }
 
     function sendMessage() {
         const text = inputEl.value.trim();
-        if (!text || !deps.getCanSend()) return;
+        const hasImages = hasPendingImages();
+        // Allow sending with either text OR staged images.
+        if ((!text && !hasImages) || !deps.getCanSend()) return;
 
         if (deps.hasUnconfirmedCustomMemorySelection()) {
             deps.openContextAttachSendModal(text);
@@ -44,6 +55,7 @@ export function createSend(deps) {
     }
 
     function bindSendEvents() {
+        bindImagePaste();
         inputEl.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && deps.getMultiSelectMode()) {
                 e.preventDefault();
