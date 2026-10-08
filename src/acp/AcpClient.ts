@@ -424,7 +424,7 @@ export class AcpClient {
         }
     }
 
-    async sendMessage(text: string | any | any[]): Promise<void> {
+    async sendMessage(text: string): Promise<void> {
         if (this._status !== 'ready') {
             this._onMessage('assistant', 'Please wait for connection...');
             return;

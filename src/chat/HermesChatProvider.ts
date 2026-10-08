@@ -247,7 +247,7 @@ export class HermesChatProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage((message) => {
             switch (message.type) {
                 case 'sendMessage':
-                    this._enqueueChatOp(() => this._handleUserMessage(message.text, message.contextAttach, (message as any).images));
+                    this._enqueueChatOp(() => this._handleUserMessage(message.text, message.contextAttach));
                     break;
                 case 'cancel':
                     // Cancel must not wait behind an in-flight sendMessage; AcpClient
@@ -2078,7 +2078,7 @@ export class HermesChatProvider implements vscode.WebviewViewProvider {
         vscode.window.showWarningMessage(t('hermesNotConnected'));
     }
 
-    private async _handleUserMessage(text: string, contextAttach?: ContextAttachOption, images?: Array<{ mimeType: string; data: string }>): Promise<void> {
+    private async _handleUserMessage(text: string, contextAttach?: ContextAttachOption): Promise<void> {
         const epoch = this._sendEpoch;
         await this._awaitSessionReady();
         if (epoch !== this._sendEpoch) {
@@ -2090,8 +2090,7 @@ export class HermesChatProvider implements vscode.WebviewViewProvider {
         if (epoch !== this._sendEpoch) {
             return;
         }
-        const imageCount = images?.length ?? 0;
-        this._log(`User message: ${text.slice(0, 80)}${imageCount ? ` [+${imageCount} image(s)]` : ''}`);
+        this._log(`User message: ${text.slice(0, 80)}`);
         this._snapshotSessionModelFromProfile();
         this._promptSessionId = this._sessionId;
         this._saveMessage('user', text);
@@ -2107,20 +2106,7 @@ export class HermesChatProvider implements vscode.WebviewViewProvider {
         if (epoch !== this._sendEpoch) {
             return;
         }
-        if (imageCount > 0) {
-            // Compose an ACP prompt with a text block followed by one image block per staged image.
-            // Hermes' ACP adapter advertises promptCapabilities.image=true and decodes these directly.
-            const blocks: Array<{ type: 'text'; text: string } | { type: 'image'; mimeType: string; data: string }> = [];
-            if (promptText.length > 0) {
-                blocks.push({ type: 'text', text: promptText });
-            }
-            for (const img of images!) {
-                blocks.push({ type: 'image', mimeType: img.mimeType || 'image/png', data: img.data });
-            }
-            await this._acp?.sendMessage(blocks as any);
-        } else {
-            await this._acp?.sendMessage(promptText);
-        }
+        await this._acp?.sendMessage(promptText);
     }
 
     private async _handleCancel(): Promise<void> {
